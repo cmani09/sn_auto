@@ -1,0 +1,52 @@
+// action.setRedirectURL("export_update_set.do?sysparm_sys_id=" + sysid + "&sysparm_delete_when_done=true");
+
+// Create Update Set to move
+
+var id = '7da338ba73c2130038da44138bf6a783';
+
+var newUpdateSet = generateUpdateSet(id);
+gs.print('newUpdateSet: ' + newUpdateSet);
+
+function generateUpdateSet(sysID) {
+
+    var id = '7da338ba73c2130038da44138bf6a783';
+    var updateSet = new GlideRecord('sys_update_set');
+    updateSet.get(id);
+
+    //gs.print(updateSet.sys_id);
+
+    var retrievedUpdateSet = new GlideRecord('sys_remote_update_set');
+    retrievedUpdateSet.initialize();
+    retrievedUpdateSet.description = updateSet.description;
+    retrievedUpdateSet.name = updateSet.name;
+    retrievedUpdateSet.release_date = updateSet.release_date;
+    retrievedUpdateSet.remote_sys_id = updateSet.sys_id;
+    retrievedUpdateSet.application = updateSet.application;
+    //retrievedUpdateSet.remote_base_update_set = baseUpdateSetId;
+    //retrievedUpdateSet.parent = parentId;
+    retrievedUpdateSet.state = "loaded";
+
+    var scopeGr = new GlideRecord('sys_scope');
+    scopeGr.get(updateSet.application);
+    if (scopeGr.isValid()) {
+        retrievedUpdateSet.application_name = scopeGr.name;
+        retrievedUpdateSet.application_scope = scopeGr.scope;
+        retrievedUpdateSet.application_version = scopeGr.version;
+    }
+
+    retrievedUpdateSet.setWorkflow(false);
+
+    var retrievedUpdateSetSysId = retrievedUpdateSet.insert();
+
+    var update = new GlideRecord('sys_update_xml');
+    update.addQuery('update_set', updateSet.sys_id);
+    update.query();
+    while (update.next()) {
+        update.remote_update_set = retrievedUpdateSet.sys_id;
+        update.update_set = '';
+        update.insert();
+    }
+
+    return retrievedUpdateSetSysId;
+
+}

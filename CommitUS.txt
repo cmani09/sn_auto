@@ -1,0 +1,3 @@
+var starter = new SNC.HierarchyUpdateSetScriptable();
+gs.print(starter.commitHierarchy('586926cedb699700d8235b3e5e9619d1'));
+

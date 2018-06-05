@@ -1,0 +1,28 @@
+// preview update set
+
+previewUpdateSet('a2926b8fdb911740d8235b3e5e96195d');
+
+function previewUpdateSet(sysID) {
+
+    var gr = new GlideRecord('sys_remote_update_set');
+    if (gr.get(sysID)) {
+        gs.print('hello');
+        gr.state = "previewing";
+        gr.update();
+
+        var worker = new GlideScriptedHierarchicalWorker();
+        worker.setProgressName("Generating Update Set Preview for: " + gr.name);
+        worker.setScriptIncludeName("UpdateSetPreviewer");
+        worker.setScriptIncludeMethod("generatePreviewRecordsWithUpdate");
+        worker.putMethodArg("sys_id", gr.sys_id);
+        worker.setSource(gr.sys_id);
+        worker.setSourceTable("sys_remote_update_set");
+        worker.setBackground(true);
+        worker.setCannotCancel(true);
+        worker.start();
+
+        gs.print(worker.getProgressID());
+
+    }
+
+}

@@ -1,0 +1,53 @@
+// commit remote update set
+
+commitRemoteUpdateSet('a2926b8fdb911740d8235b3e5e96195d');
+
+function commitRemoteUpdateSet(sysID) {
+
+    var remote_updateset_id = sysID
+
+    //Load the remote update set and create a local updateset from it.
+    var remote_updateset = new GlideRecord('sys_remote_update_set');
+    remote_updateset.addQuery('sys_id', remote_updateset_id);
+    remote_updateset.query();
+    if (remote_updateset.next()) {
+        var worker = new GlideUpdateSetWorker();
+
+        // inserts the new local update set and updates the remote update set accordingly
+        var local_updateset = new GlideRecord('sys_update_set');
+        var local_updateset_sysid = worker.remoteUpdateSetCommit(local_updateset, remote_updateset, remote_updateset.update_source.url);
+        copyUpdateXML(local_updateset_sysid, remote_updateset.sys_id);
+        remote_updateset.update();
+
+        worker.setUpdateSetSysId(local_updateset_sysid);
+        worker.setProgressName('Committing update set: ' + remote_updateset.name);
+        worker.setBackground(true)
+        worker.start();
+
+        //return both ID for redirect
+        return worker.getProgressID() + "," + local_updateset_sysid + "," + this._shouldRefreshNav(remote_updateset_id) + "," + this._shouldRefreshAppsList(remote_updateset_id);
+
+        function copyUpdateXML(lsysid, rsysid) {
+            var xgr = new GlideRecord("sys_update_xml");
+            xgr.addQuery("remote_update_set", rsysid);
+            if (updateSetPreviewInstalled()) {
+                var pgr = new GlideRecord("sys_update_preview_xml");
+                pgr.addQuery("remote_update.remote_update_set", rsysid);
+                pgr.query();
+                while (pgr.next()) {
+                    if (pgr.proposed_action != "skip") {
+                        continue;
+                    }
+                    var temp = new GlideRecord("sys_update_xml");
+                    temp.query("sys_id", pgr.remote_update);
+                    if (temp.next()) {
+                        xgr.addQuery("name", "!=", temp.name + "");
+                    }
+                }
+            }
+
+        }
+
+    }
+
+}

@@ -1,0 +1,17 @@
+// Complete Update Set
+
+var id = '7da338ba73c2130038da44138bf6a783';
+
+completeUpdateSet(id);
+
+function completeUpdateSet(sysID) {
+
+    var updateSet = new GlideRecord('sys_update_set');
+    if (updateSet.get(sysID)) {
+        updateSet.setValue('state', 'complete');
+        updateSet.update();
+    }
+
+}
+
+
